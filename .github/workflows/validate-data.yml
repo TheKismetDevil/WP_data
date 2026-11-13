@@ -1,0 +1,25 @@
+name: Validate WP26 Data PR
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Ensure WP26.original.csv is untouched
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          if echo "$CHANGED" | grep -qx "WP26.original.csv"; then
+            echo "Error: WP26.original.csv is immutable and cannot be modified by PRs."
+            exit 1
+          fi
+      - name: Validate CSV & Translations Schema
+        run: node scripts/validate.mjs
